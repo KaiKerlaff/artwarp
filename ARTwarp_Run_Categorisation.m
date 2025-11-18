@@ -1,46 +1,68 @@
-function ARTwarp_Run_Categorisation
+function ARTwarp_Run_Categorisation(is_cli_mode, network_params, output_folder)
 
 global NET DATA numSamples warpFactorLevel vigilance bias learningRate maxNumCategories maxNumIterations sampleInterval resample
 
 % OBTAINING NETWORK PARAMETERS
+
+% if not running in cli mode, get the network parameters from the gui
 % loading all the variables that were set in 'ARTwarp_Get_Parameters'
+if ~is_cli_mode
+    h = findobj('Tag', 'warpFactorLevel');
+    warpFactorLevel = str2num(get(h, 'String'))
+    
+    h = findobj('Tag', 'vigilance');
+    vigilance = str2num(get(h, 'String'));
+    
+    h = findobj('Tag', 'bias');
+    bias = str2num(get(h, 'String'));
+    
+    h = findobj('Tag', 'learningRate');
+    learningRate = str2num(get(h, 'String'));
+    
+    h = findobj('Tag', 'maxNumCategories');
+    maxNumCategories = round(str2num(get(h, 'String')));
+    
+    h = findobj('Tag', 'maxNumIterations');
+    maxNumIterations = round(str2num(get(h, 'String')));
+    
+    h = findobj('Tag', 'resample');
+    resample = get(h, 'Value');
 
-h = findobj('Tag', 'warpFactorLevel');
-warpFactorLevel = str2num(get(h, 'String'))
-
-h = findobj('Tag', 'vigilance');
-vigilance = str2num(get(h, 'String'));
-
-h = findobj('Tag', 'bias');
-bias = str2num(get(h, 'String'));
-
-h = findobj('Tag', 'learningRate');
-learningRate = str2num(get(h, 'String'));
-
-h = findobj('Tag', 'maxNumCategories');
-maxNumCategories = round(str2num(get(h, 'String')));
-
-h = findobj('Tag', 'maxNumIterations');
-maxNumIterations = round(str2num(get(h, 'String')));
-
-h = findobj('Tag', 'resample');
-resample = get(h, 'Value');
+% Otherwise, get the network parameters from the network_params dicttionary
+% passed from ARTwarp_cli_mode
+else
+    warpFactorLevel = network_params('warpFactorLevel');
+    vigilance = network_params('vigilance');
+    bias = network_params('bias');
+    learningRate = network_params('learningRate');
+    maxNumCategories = network_params('maxNumCategories');
+    maxNumIterations = network_params('maxNumIterations');
+    resample = network_params('resample');
+    sampleInterval = network_params('sampleInterval');
+end
 
 % resample frequency contours to new sampling interval if 'resample' is
 % selected
 if resample == 1
-    h = findobj('Tag', 'sampleInterval');
-    sampleInterval = str2num(get(h, 'String'))/1000;
+    % if not running in cli mode, get the value from GUI and convert to
+    % seconds
+    if ~is_cli_mode
+        h = findobj('Tag', 'sampleInterval');
+        sampleInterval = str2num(get(h, 'String'))/1000;
+    end
+    % interpolate the contour to the new temporal resolution interval
+    % sampleInterval
     for c1 = 1:numSamples
         DATA(c1).contour = interp1(1:length(DATA(c1).contour), DATA(c1).contour, 1:sampleInterval/DATA(c1).tempres:length(DATA(c1).contour));
         DATA(c1).length = length(DATA(c1).contour);
     end
 end
 
-% close the 'parametersGUI' window
-h = findobj('Tag','parameterGUI');
-close(h)
-
+% if not running in cli mode, close the 'parametersGUI' window
+if ~is_cli_mode
+    h = findobj('Tag','parameterGUI');
+    close(h)
+end
 
 % INITIALIZING NETWORK
 lengths = round([DATA.length]./4); %not sure why this is divided by 4
@@ -57,8 +79,10 @@ weight = ones(p, 0); %create an empty matrix 'weight' with p rows (max of DATA.l
 NET = struct('numFeatures', {p}, 'numCategories', {0}, 'maxNumCategories', {maxNumCategories}, 'weight', {weight}, ...
     'vigilance', {vigilance}, 'bias', {bias}, 'maxNumIterations', {maxNumIterations}, 'learningRate', {learningRate});
 
-% GENERATING THE GRAPHIC DISPLAY
-ARTwarp_Create_Figure
+% if not running in cli mode, GENERATING THE GRAPHIC DISPLAY
+if ~is_cli_mode
+    ARTwarp_Create_Figure
+end
 
 % TRAINING
 [x, sortedRandom] = sort(randn(numSamples, 1)); %randomize the list of contours
@@ -160,41 +184,44 @@ for iterationNumber = 1:NET.maxNumIterations
         if oldCategory ~= DATA(sampleNumber).category;
             numChanges = numChanges+1;
         end
-        % Graphic output
-        delete(findobj('Tag', 'P0'));
-        h0 = findobj('Tag', '0');
-        set(h0, 'XLim', [0 Xmax], 'YLim', [0 Ymax]);
-        h1 = line('Parent', h0, 'Color','r', 'Tag', 'P0', 'XData', 1:currentLength, 'YData', currentData);
-        h1 = findobj('Tag', 'T0');
-        set(h1, 'String', currentName, 'Color', 'r');
-        h1 = findobj('Tag', 'Match');
-        set(h1, 'String', sprintf('%2.0f%%', maxMatch));
-        h1 = findobj('Tag', 'Iteration');
-        set(h1, 'String', sprintf('%2.0f', iterationNumber));
-        h1 = findobj('Tag', 'Input');
-        set(h1, 'String', sprintf('%2.0f of %2.0f', indexNumber, numSamples));
-        h1 = findobj('Tag', 'Reclassifications');
-        set(h1, 'String', sprintf('%2.0f', numChanges))
-        for counter3 = 1:NET.numCategories
-            delete(findobj('Tag', ['P' num2str(counter3)]));
-            h0 = findobj('Tag', num2str(counter3));
-            set(h0, 'Tag', num2str(counter3), 'Visible', 'on', 'XLim', [0 Xmax], 'YLim', [0 Ymax]);
-            h1 = line('Parent', h0, 'Color','k', 'Tag', ['P' num2str(counter3)], 'XData', 1:p, 'YData', NET.weight(:,counter3));
-            h1 = findobj('Tag', ['T' num2str(counter3)]);
-            set(h1, 'Color', 'k', 'Visible', 'on');
+
+        % if not running in cli mode, generate graphic output
+        if ~is_cli_mode
+            delete(findobj('Tag', 'P0'));
+            h0 = findobj('Tag', '0');
+            set(h0, 'XLim', [0 Xmax], 'YLim', [0 Ymax]);
+            h1 = line('Parent', h0, 'Color','r', 'Tag', 'P0', 'XData', 1:currentLength, 'YData', currentData);
+            h1 = findobj('Tag', 'T0');
+            set(h1, 'String', currentName, 'Color', 'r');
+            h1 = findobj('Tag', 'Match');
+            set(h1, 'String', sprintf('%2.0f%%', maxMatch));
+            h1 = findobj('Tag', 'Iteration');
+            set(h1, 'String', sprintf('%2.0f', iterationNumber));
+            h1 = findobj('Tag', 'Input');
+            set(h1, 'String', sprintf('%2.0f of %2.0f', indexNumber, numSamples));
+            h1 = findobj('Tag', 'Reclassifications');
+            set(h1, 'String', sprintf('%2.0f', numChanges))
+            for counter3 = 1:NET.numCategories
+                delete(findobj('Tag', ['P' num2str(counter3)]));
+                h0 = findobj('Tag', num2str(counter3));
+                set(h0, 'Tag', num2str(counter3), 'Visible', 'on', 'XLim', [0 Xmax], 'YLim', [0 Ymax]);
+                h1 = line('Parent', h0, 'Color','k', 'Tag', ['P' num2str(counter3)], 'XData', 1:p, 'YData', NET.weight(:,counter3));
+                h1 = findobj('Tag', ['T' num2str(counter3)]);
+                set(h1, 'Color', 'k', 'Visible', 'on');
+            end
+            h1 = findobj('Tag', ['P' num2str(DATA(sampleNumber).category)]);
+            set(h1, 'Color', 'r');
+            h1 = findobj('Tag', ['T' num2str(DATA(sampleNumber).category)]);
+            set(h1, 'Color', 'r');
+            drawnow
+            %print statements added by JNO 23/02/2018
+            fprintf('Iteration %d\n', iterationNumber)
+            fprintf('Whistle %2.0f\n', indexNumber);
+            fprintf('Number of whistles reclassified %2.0f\n', numChanges);
+            %print statements below added by WF 15/05/2022
+            fprintf('Contour Name: %s\n', currentName);
         end
-        h1 = findobj('Tag', ['P' num2str(DATA(sampleNumber).category)]);
-        set(h1, 'Color', 'r');
-        h1 = findobj('Tag', ['T' num2str(DATA(sampleNumber).category)]);
-        set(h1, 'Color', 'r');
-        drawnow
-        %print statements added by JNO 23/02/2018
-        fprintf('Iteration %d\n', iterationNumber)
-        fprintf('Whistle %2.0f\n', indexNumber);
-        fprintf('Number of whistles reclassified %2.0f\n', numChanges);
-        %print statements below added by WF 15/05/2022
-        fprintf('Contour Name: %s\n', currentName);
-        
+
     end
     % If no new categories were added, and no inputs were reclassified in the current iteration
     % then we've reached equilibrium. Thus, we can stop training.
@@ -209,14 +236,103 @@ for iterationNumber = 1:NET.maxNumIterations
     %fprintf('Number of whistles reclassified %2.0f\n', numChanges);
     formatSpec = 'ARTwarp%02.0fit%03.0f'; 
     name = sprintf(formatSpec,NET.vigilance, iterationNumber);
-    save(name);
+
+    % Save iteration information to the specified results folder
+    save(fullfile(output_folder, name)); 
 end
-fprintf('The number of iterations needed was %d\n', iterationNumber);
+
+% ASSEMBLE THE REFCONTOURS STRUCT
+% get the number of reference contours generated from the number of rows of
+% NET.weight
+num_refcontours = size(NET.weight,2);
+
+% create the struct REFCONTOURS, initially empty
+REFCONTOURS = struct();
+
+% POPULATE REFCONTOURS WITH CORRECT VALUES SO IT CAN BE RE-LOADED
+% for each reference contour:
+for i=1:num_refcontours
+
+    % Assign the contour a unique UUID
+    REFCONTOURS(i).id = char(java.util.UUID.randomUUID);
+
+    % Get the contour's parent ids
+    parent_ids = strings(1,numSamples);
+    for j=1:numSamples
+        if DATA(j).category == i
+            if ~(isempty(DATA(j).id))
+                parent_ids(1,j) = DATA(j).id;
+            else
+                parent_ids(1,j) = "";
+            end
+        end
+    end
+    parent_ids = parent_ids(~(parent_ids == ""));
+
+    % And assign the contour these parent ids
+    REFCONTOURS(i).parent_ids = parent_ids;
+
+    % Assign the contour a PLACEHOLDER temporal resolution (if the contours
+    % were not resampled, we leave it to ARTwarp_Load_Data to produce a
+    % tempres from the fcontour data)
+    if resample == 1
+        REFCONTOURS(i).tempres = sampleInterval;
+    else
+        % PLACEHOLDER VALUE: CHECK WHAT THIS SHOULD BE
+        REFCONTOURS(i).tempres = 0.01;
+    end
+
+    % Assign the contour a length given by the length of its non-empty
+    % contour indexes
+    refcontour = NET.weight(:,i);
+    contour_length = length(refcontour(~isnan(refcontour)));
+
+    % calculate the contours ctrlength in s and assign this to the contour
+    ctrlength = contour_length * REFCONTOURS(i).tempres;
+
+    % Assign the contour a 'fcontour' value: this is the actual frequency
+    % array, with an added last index containing the total time in ms of
+    % the contour
+    freqContour = (1:contour_length+1)*0;
+    freqContour(1:end-1) = (NET.weight(1:contour_length,i))';
+    freqContour(end) = ctrlength*1000;
+    REFCONTOURS(i).freqContour = freqContour;
+
+end
+
+% transpose REFCONTOURS to maintain same dimensions as DATA
+REFCONTOURS = REFCONTOURS';
+
+% save each reference contour to a .ctr file with a filename indicating the
+% category number the contour represents. NOTE THAT IN LOCAL USAGE, USER
+% WILL NOT BE ABLE TO DISTINGUISH BETWEEN REFERENCE CONTOURS CREATED FROM
+% DIFFERENT RUNS OF ARTWARP. ONLY DISTINGUISHABLE BY ids
+for i = 1:num_refcontours
+    id = REFCONTOURS(i).id;
+    parent_ids = REFCONTOURS(i).parent_ids;
+    tempres = REFCONTOURS(i).tempres;
+    freqContour = REFCONTOURS(i).freqContour;
+    ctr_name = fullfile(output_folder, sprintf('REF%03d.ctr', i));
+    % save as a MAT-file but with .ctr extension
+    save(ctr_name, 'id', 'parent_ids', 'tempres', 'freqContour');
+end
+
+% If not running in cli mode, print total number of iterations needed
+if ~is_cli_mode
+    fprintf('The number of iterations needed was %d\n', iterationNumber);
+end
+
+% Save iteration information to the specified results folder
 formatSpec = 'ARTwarp%02.0fFINAL';
 endname = sprintf(formatSpec,NET.vigilance);
-save(endname);
-h = findobj('Tag', 'Runmenu');
-set(h, 'Enable', 'on');
-h = findobj('Tag', 'Plotmenu');
-set(h, 'Enable', 'on');
+save(fullfile(output_folder, endname)); 
+
+% Re-enable GUI options if not running in cli mode
+if ~is_cli_mode
+    h = findobj('Tag', 'Runmenu');
+    set(h, 'Enable', 'on');
+    h = findobj('Tag', 'Plotmenu');
+    set(h, 'Enable', 'on');
+end
+
 return
