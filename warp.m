@@ -280,5 +280,3 @@ X = {D, warpfun};
 % This line is not entirely necessary as these variables are local to the
 % function, so will be cleared automatically when the function ends.
 clear N M p;
-
-end
