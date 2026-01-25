@@ -1,19 +1,36 @@
-% The variable freqCol (below) is the column containing the frequency values in the
-% csv file.
-freqCol = 1; %should be 1 for pulse trains and 2 for whistles from ROCCA
+function TempRes3(freqCol, tempres, folder_name)
 
+% Procedure to convert frequency-time formatted .csv files to .ctrs for
+% categorisation by ARTwarp
+%
+% INPUTS
+% - freqCol (1x1 double): the column containing the frequency values in the
+% csv file. Should be 1 for pulse trains and 2 for whistles from ROCCA
+% - tempres (1x1 double): the temporal resolution of the audio sample
+% (time between consecutive frequency values being recorded, in seconds)
+% - folder_name (char): the path to the folder containing the .csv files to
+% convert
+%
+% OUTPUTS
+% None.
+
+% LEGACY CODE FOR MANUALLY EDITING freqCol AND tempres
+%freqCol = 1; %should be 1 for pulse trains and 2 for whistles from ROCCA
 
 %tempres=0.011 %Modify it according to the files - This is the value I used for the Valencia analysis
 %tempres=0.012 %Modify it according to the files - This is the value I used for the Southall delphinus analysis
-tempres=0.010 %Modify it according to the files - This is the value I used for Units/whistles
+%tempres=0.010 %Modify it according to the files - This is the value I used for Units/whistles
 
-folder_name = uigetdir(); %Code for selecting the folder
-if (~folder_name); return; end
+%folder_name = uigetdir(); %Code for selecting the folder
+%if (~folder_name); return; end
+
+% NAVIGATE TO FOLDER
 cd (folder_name);
 
-% loop through the txt files in the folder
-fileList = dir([folder_name '//*.csv']);
 
+% CONVERT .csv FILES TO .ctr AND SAVE TO THE SAME FOLDER
+% loop through the .csv files in the folder
+fileList = dir([folder_name '//*.csv']);
 
 for i=1:length(fileList) 
     curFile = fileList(i).name;
