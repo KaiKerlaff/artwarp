@@ -35,7 +35,11 @@ for c1 = 1:numSamples
     clear tempres
     clear ctrlength
     clear fcontour
-    eval(['load ' fullfile(DATA(c1).folder, DATA(c1).name) ' -mat']);
+
+    % Load the folder name directly
+    filename = fullfile(DATA(c1).folder, DATA(c1).name);
+    load(filename, '-mat');
+
     if exist('fcontour', 'var')
         DATA(c1).ctrlength = fcontour(length(fcontour))/1000;
         DATA(c1).length = length(fcontour);

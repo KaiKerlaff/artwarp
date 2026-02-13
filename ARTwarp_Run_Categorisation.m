@@ -279,6 +279,9 @@ for iterationNumber = 1:NET.maxNumIterations
 
     % Save iteration information to the specified results folder
     save(fullfile(output_folder, name)); 
+
+    % Output success message
+    fprintf('Results successfully exported to: %s\n', output_folder);
 end
 
 % ASSEMBLE THE REFCONTOURS STRUCT
