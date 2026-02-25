@@ -2,14 +2,24 @@
 
 % Additional comments added by WF 8/7/2022 to help us newbies
 
-function ARTwarp_Load_Data
+function ARTwarp_Load_Data(is_cli_mode, input_folder)
 
 global DATA numSamples tempres
 
 % user selects folder that contains .ctr files and changes the active
 % directory to this location and only sees .ctr files
-path = uigetdir('*.ctr', 'Select the folder containing the contour files');
+
+% if running in cli mode, get the path to the .ctrs from input_folder:
+if is_cli_mode
+    path = input_folder;
+
+% otherwise, get the user to select the path from the gui
+else
+    path = uigetdir('*.ctr', 'Select the folder containing the contour files');
+end
+
 path = [path '/*ctr'];
+
 DATA = dir(path);
 DATA = rmfield(DATA,'date');
 DATA = rmfield(DATA,'datenum');
@@ -55,6 +65,17 @@ for c1 = 1:numSamples
     else
         DATA(c1).id = []; % otherwise, make the value in the DATA.id field [], to show that no ID has been assigned
     end
+
+    if exist('parent_ids', 'var') % if the variable 'parent_ids' exists, make this the value in the DATA.parent_ids field
+        DATA(c1).parent_ids = parent_ids;
+        clear parent_ids; % then clear the parent_ids variable to avoid all subsequent contours being assigned the same parent_ids!
+    else
+        DATA(c1).parent_ids = []; % otherwise, make the value in the DATA.parent_ids field [], to show that no parent_ids have been assigned
+    end
 end
-h = findobj('Tag', 'Runmenu'); %find the object Runmenu (which is in ARTwarp.m)                                                                                                                        
-set(h, 'Enable', 'on'); %change its 'Enable' property to 'on' so the menu in the ARTwarp window will be undimmed
+
+% if not running in cli mode, update the gui to undim the 'run' menu
+if ~is_cli_mode
+    h = findobj('Tag', 'Runmenu'); %find the object Runmenu (which is in ARTwarp.m)                                                                                                                        
+    set(h, 'Enable', 'on'); %change its 'Enable' property to 'on' so the menu in the ARTwarp window will be undimmed
+end
