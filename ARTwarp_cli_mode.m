@@ -42,6 +42,9 @@ addRequired(p, 'resample', validationFcn);
 validationFcn = @(x) isnumeric(x) && isscalar(x);
 addRequired(p, 'sampleInterval', validationFcn);
 
+% Optional output folder name argument, default is empty
+addOptional(p, 'outputFolder', [], @(x) ischar(x) || isempty(x));
+
 % Parse and validate the input arguments (folder paths given must be to
 % folders, file path given must be to a file)
 parse(p, varargin{:});
@@ -68,14 +71,19 @@ end
 % RECOMMENDED FOR USE WHEN ABLE TO CONNECT TO OCEAN)
 localJobId = char(java.util.UUID.randomUUID);
 
-% and create the output folder using a name formed from the date and time,
+% and if no output folder name is specified,
+% create the output folder using a name formed from the date and time,
 % and first 7 characters of the localJobId, for local tracking of outputs
 % from recursive output runs
-filename_date = replace(char(datetime), {' ', ':'}, '-');
-outputFolder = ['LOCJOB' localJobId(1:7) 'AT' filename_date];
+if isempty(p.Results.outputFolder)
+    filename_date = replace(char(datetime), {' ', ':'}, '-');
+    outputFolder = ['LOCJOB' localJobId(1:7) 'AT' filename_date];
+else
+    outputFolder = char(p.Results.outputFolder);
+end
 
 if ~exist(outputFolder, 'dir')
-% If a folder with this name doesn't exist yet (and it shouldn't), make a
+% If a folder with this name doesn't exist yet, make a
 % new folder with the name specified by outputFolder
         mkdir(outputFolder);
 end
