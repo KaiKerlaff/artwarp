@@ -47,8 +47,12 @@ addParameter(p, 'sampleInterval', 0.01, validationFcn);
 
 % If number of parameters is below expected, 
 % print usage, example usage, and end the program
-if nargin < 5
-    fprintf("\nUsage: ARTwarp_cli_mode('<input_folder_name>', '<warp_factor>', <vigilance>, <number_of_contours>, '<max_num_of_iterations>')\n");
+if nargin == 0
+    fprintf("\nYou did not specify input parameters. Now you can enter them interactively:\n")
+    run('ARTwarp_cli_builder.m')
+    return
+elseif nargin > 0 && nargin < 5
+    fprintf("\nUsage: ARTwarp_cli_mode('<input_folder_name>', <warp_factor>, <vigilance>, <number_of_contours>, <max_num_of_iterations>)\n");
     fprintf("For example: ARTwarp_cli_mode('ctr', 3, 95, 100, 100)\n");
     return
 end
@@ -87,7 +91,7 @@ outputFolder = inputFolder + "_" + string(vigilance) + "_" + string(warpFactorLe
 if ~exist(outputFolder, 'dir')
 % If a folder with this name doesn't exist yet, make a
 % new folder with the name specified by outputFolder
-        mkdir(outputFolder);
+    mkdir(outputFolder);
 end
 
 % PUT NETWORK PARAMETERS INTO A DICTIONARY

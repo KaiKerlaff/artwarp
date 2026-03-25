@@ -1,3 +1,4 @@
+function ARTwarp_cli_builder()
 % This file creates the CLI command based on the input parameters.
 
 % --- Required inputs (enforced) ---
@@ -137,3 +138,15 @@ cmd = sprintf('%s)', cmd);
 
 % Print the CLI command
 fprintf('\nGenerated command:\n%s\n', cmd);
+
+% Ask to run CLI mode directly
+while true
+    proceed = strtrim(input('\nDo you want to proceed? (y/n) ', 's'));
+    if lower(proceed) == 'y'
+        eval(cmd)
+        break;
+    elseif lower(proceed) == 'n'
+        break;
+    end
+    fprintf('Invalid input. Must be between y or n.\n');
+end
