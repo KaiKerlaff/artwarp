@@ -17,15 +17,7 @@ addRequired(p, 'warpFactorLevel', validationFcn);
 validationFcn = @(x) (x >= 1) && (x <= 99) && isnumeric(x) && isscalar(x);
 addRequired(p, 'vigilance', validationFcn);
 
-% The bias
-validationFcn = @(x) (x >= 0) && (x <= 1) && isnumeric(x) && isscalar(x);
-addRequired(p, 'bias', validationFcn);
-
-% The learning rate
-validationFcn = @(x) (x > 0) && (x <= 1) && isnumeric(x) && isscalar(x);
-addRequired(p, 'learningRate', validationFcn);
-
-% The maximum number of categories
+% The maximum number of categories / number of contours
 validationFcn = @(x) (x >= 1) && mod(x,1)==0 && isnumeric(x) && isscalar(x);
 addRequired(p, 'maxNumCategories', validationFcn);
 
@@ -33,22 +25,42 @@ addRequired(p, 'maxNumCategories', validationFcn);
 validationFcn = @(x) (x >= 1) && mod(x,1)==0 && isnumeric(x) && isscalar(x);
 addRequired(p, 'maxNumIterations', validationFcn);
 
+% --- Optional parameters ---
+
+% The bias, default = 0.000001 (optional)
+validationFcn = @(x) (x >= 0) && (x <= 1) && isnumeric(x) && isscalar(x);
+addParameter(p, 'bias', 1e-6, validationFcn);
+
+% The learning rate, default = 0.1 (optional)
+validationFcn = @(x) (x > 0) && (x <= 1) && isnumeric(x) && isscalar(x);
+addParameter(p, 'learningRate', 0.1, validationFcn);
+
 % Whether the contours should be resampled before categorisation (1 for yes,)
 % 0 for no
+% default is 1 for yes to resample
 validationFcn = @(x) (x==0 || x==1) && isnumeric(x) && isscalar(x);
-addRequired(p, 'resample', validationFcn);
+addParameter(p, 'resample', 1, validationFcn);
 
-% The resampling interval
+% The resampling interval, default = 0.01s (10ms)
 validationFcn = @(x) isnumeric(x) && isscalar(x);
-addRequired(p, 'sampleInterval', validationFcn);
+addParameter(p, 'sampleInterval', 0.01, validationFcn);
 
-% Optional output folder name argument, default is empty
-addOptional(p, 'outputFolder', [], @(x) ischar(x) || isempty(x));
+% If number of parameters is below expected, 
+% print usage, example usage, and end the program
+if nargin == 0
+    fprintf("\nYou did not specify input parameters. Now you can enter them interactively:\n")
+    run('ARTwarp_cli_builder.m')
+    return
+elseif nargin > 0 && nargin < 5
+    fprintf("\nUsage: ARTwarp_cli_mode('<input_folder_name>', <warp_factor>, <vigilance>, <number_of_contours>, <max_num_of_iterations>)\n");
+    fprintf("For example: ARTwarp_cli_mode('ctr', 3, 95, 100, 100)\n");
+    return
+end
 
 % Optional argument to update weights according to warped contours, 1 =
 % update according to warped, 0 = update normally according to original.
 % Default is 0
-addOptional(p, 'compareWarped', 0, @(x) (x==0 || x==1) && isnumeric(x) && isscalar(x));
+addParameter(p, 'compareWarped', 0, @(x) (x==0 || x==1) && isnumeric(x) && isscalar(x));
 
 % Parse and validate the input arguments (folder paths given must be to
 % folders, file path given must be to a file)
@@ -73,25 +85,13 @@ if isempty(inputFolder)
     error('No input folder specified');
 end
 
-% CREATE A LOCAL JOB id FOR USER TO TRACK LOCAL RUNS WHILE OFFLINE (NOT
-% RECOMMENDED FOR USE WHEN ABLE TO CONNECT TO OCEAN)
-localJobId = char(java.util.UUID.randomUUID);
-
-% and if no output folder name is specified,
-% create the output folder using a name formed from the date and time,
-% and first 7 characters of the localJobId, for local tracking of outputs
-% from recursive output runs
-if isempty(p.Results.outputFolder)
-    filename_date = replace(char(datetime), {' ', ':'}, '-');
-    outputFolder = ['LOCJOB' localJobId(1:7) 'AT' filename_date];
-else
-    outputFolder = char(p.Results.outputFolder);
-end
+% Name the output folder based on the input folder, vigilance and warp factor
+outputFolder = inputFolder + "_" + string(vigilance) + "_" + string(warpFactorLevel);
 
 if ~exist(outputFolder, 'dir')
 % If a folder with this name doesn't exist yet, make a
 % new folder with the name specified by outputFolder
-        mkdir(outputFolder);
+    mkdir(outputFolder);
 end
 
 % PUT NETWORK PARAMETERS INTO A DICTIONARY
@@ -101,6 +101,20 @@ params = dictionary("warpFactorLevel", warpFactorLevel, "vigilance",...
     maxNumIterations, "resample", resample, "sampleInterval",...
     sampleInterval, "compareWarped", compareWarped);
 
+% Print all parameters so user is aware of the input
+fprintf('\n--- INPUT PARAMETERS ---\n');
+fprintf('\ninputFolder       : %s\n', inputFolder);
+fprintf('warpFactorLevel   : %g\n', warpFactorLevel);
+fprintf('vigilance         : %g\n', vigilance);
+fprintf('maxNumCategories  : %d\n', maxNumCategories);
+fprintf('maxNumIterations  : %d\n', maxNumIterations);
+fprintf('bias              : %g\n', bias);
+fprintf('learningRate      : %g\n', learningRate);
+fprintf('resample          : %g\n', resample);
+fprintf('sampleInterval    : %g\n', sampleInterval);
+fprintf('compareWarped     : %d\n', compareWarped);
+fprintf('outputFolder      : %s\n', outputFolder);
+drawnow; % forces MATLAB to flush output immediately
 % LOAD DATA FROM SPECIFIED INPUT FOLDER
 
 ARTwarp_Load_Data(true, inputFolder);

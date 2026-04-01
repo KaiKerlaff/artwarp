@@ -28,4 +28,4 @@ TempRes3(true, 2, 0.005, csvDir)
 % Categorise using the standard parameters warpFactorLevel = 3, vigilance =
 % 96, bias = 0.000001, learningRate = 0.1, maxNumCategories = 56,
 % maxNumIterations = 100, resample = 1, sampleInterval = 0.01.
-ARTwarp_cli_mode(csvDir, 3, 96, 0.000001, 0.1, 56, 100, 1, 0.01)
+ARTwarp_cli_mode(csvDir, 3, 96, 56, 100)
