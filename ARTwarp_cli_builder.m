@@ -58,6 +58,7 @@ def.bias = 1e-6;
 def.learningRate = 0.1;
 def.resample = 1;
 def.sampleInterval = 0.01;
+def.compareWarped = 0;
 
 fprintf('\n--- Optional parameters (press Enter to use default) ---\n');
 
@@ -113,6 +114,19 @@ while true
     fprintf('Invalid input. Must be a positive number.\n');
 end
 
+% compareWarped (0 or 1), default 0
+while true
+    tmp = input(sprintf('compareWarped? 1=yes, 0=no (default %d): ', def.compareWarped));
+    if isempty(tmp)
+        compareWarped = def.compareWarped;
+        break;
+    elseif isnumeric(tmp) && isscalar(tmp) && (tmp == 0 || tmp == 1)
+        compareWarped = tmp;
+        break;
+    end
+    fprintf('Invalid input. Must be 0 or 1.\n');
+end
+
 % Build command string to run the CLI
 cmd = sprintf("ARTwarp_cli_mode('%s', %d, %d, %d, %d", ...
     inputFolder, warpFactorLevel, vigilance, maxNumCategories, maxNumIterations);
@@ -132,6 +146,10 @@ end
 
 if sampleInterval ~= def.sampleInterval
     cmd = sprintf('%s, ''sampleInterval'', %g', cmd, sampleInterval);
+end
+
+if compareWarped ~= def.compareWarped
+    cmd = sprintf('%s, ''compareWarped'', %g', cmd, compareWarped);
 end
 
 cmd = sprintf('%s)', cmd);

@@ -60,7 +60,7 @@ end
 % Optional argument to update weights according to warped contours, 1 =
 % update according to warped, 0 = update normally according to original.
 % Default is 0
-addOptional(p, 'compareWarped', 0, @(x) (x==0 || x==1) && isnumeric(x) && isscalar(x));
+addParameter(p, 'compareWarped', 0, @(x) (x==0 || x==1) && isnumeric(x) && isscalar(x));
 
 % Parse and validate the input arguments (folder paths given must be to
 % folders, file path given must be to a file)
@@ -103,16 +103,17 @@ params = dictionary("warpFactorLevel", warpFactorLevel, "vigilance",...
 
 % Print all parameters so user is aware of the input
 fprintf('\n--- INPUT PARAMETERS ---\n');
-fprintf('\ninputFolder\t : %s\n', inputFolder);
-fprintf('warpFactorLevel\t : %g\n', warpFactorLevel);
-fprintf('vigilance\t : %g\n', vigilance);
-fprintf('maxNumCategories : %d\n', maxNumCategories);
-fprintf('maxNumIterations : %d\n', maxNumIterations);
-fprintf('bias\t\t : %g\n', bias);
-fprintf('learningRate\t : %g\n', learningRate);
-fprintf('resample\t : %g\n', resample);
-fprintf('sampleInterval\t : %g\n', sampleInterval);
-fprintf('outputFolder\t : %s\n', outputFolder);
+fprintf('\ninputFolder       : %s\n', inputFolder);
+fprintf('warpFactorLevel   : %g\n', warpFactorLevel);
+fprintf('vigilance         : %g\n', vigilance);
+fprintf('maxNumCategories  : %d\n', maxNumCategories);
+fprintf('maxNumIterations  : %d\n', maxNumIterations);
+fprintf('bias              : %g\n', bias);
+fprintf('learningRate      : %g\n', learningRate);
+fprintf('resample          : %g\n', resample);
+fprintf('sampleInterval    : %g\n', sampleInterval);
+fprintf('compareWarped     : %d\n', compareWarped);
+fprintf('outputFolder      : %s\n', outputFolder);
 drawnow; % forces MATLAB to flush output immediately
 % LOAD DATA FROM SPECIFIED INPUT FOLDER
 

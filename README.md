@@ -61,7 +61,7 @@ Press **Enter** to use the default value.
 - **learningRate** (default: `0.1`) - must be between 0 and 1
 - **resample** (default: `1`) - `1 = yes`, `0 = no`
 - **sampleInterval** (default: `0.01` seconds) - must be a positive number
-
+- **compareWarped** (default: `0`) - `1 = yes`, `0 = no`
 All optional inputs are validated. Invalid entries will trigger a re-prompt.
 
 ---
@@ -110,22 +110,23 @@ When the CLI command is executed, the following information is displayed:
 ```
 --- INPUT PARAMETERS ---
 
-inputFolder: <input folder name>
-warpFactorLevel: <warp factor>
-vigilance: <vigilance>
-bias: 1e-06
-learningRate: 0.1
-maxNumCategories: <maximum number of categories>
-maxNumIterations: <maximum number of iterations>
-resample: 1
-sampleInterval: 0.01
-outputFolder: <output folder name>
+inputFolder       : <input folder name>
+warpFactorLevel   : <warp factor>
+vigilance         : <vigilance>
+maxNumCategories  : <maximum number of categories>
+maxNumIterations  : <maximum number of iterations>
+bias              : 1e-06
+learningRate      : 0.2
+resample          : 1
+sampleInterval    : 0.01
+compareWarped     : 0
+outputFolder      : <output folder name>
 
 --- ITERATIONS ---
 
 Iteration <number> complete
-Reclassified samples: <number of samples>
-Current categories: <number of current categories classed>
+Reclassified samples  : <number of samples>
+Current categories    : <number of current categories classed>
 
 ARTwarp CLI mode run finished.
 Results successfully exported to: <input folder name>_<vigilance>_<warp factor>
