@@ -17,7 +17,7 @@ csvDir = fullfile(ARTwarpRoot, 'Test_Data', 'csv');
 % Run TempRes3 to convert the .csvs at this location to .ctrs. Note that we
 % do not need to navigate to the ARTwarpRoot directory to run this, but
 % TempRes3 must be on the MATLAB path
-TempRes3(2, 0.005, csvDir)
+TempRes3(true, 2, 0.005, csvDir)
 
 % CATEGORISE .ctr FILES USING ARTwarp_cli_mode.m
 % Note that we load data directly from Test_Data/csv as ARTwarp_Load_Data.m
@@ -28,4 +28,4 @@ TempRes3(2, 0.005, csvDir)
 % Categorise using the standard parameters warpFactorLevel = 3, vigilance =
 % 96, bias = 0.000001, learningRate = 0.1, maxNumCategories = 56,
 % maxNumIterations = 100, resample = 1, sampleInterval = 0.01.
-ARTwarp_cli_mode(csvDir, 3, 96, 0.000001, 0.1, 56, 100, 1, 0.01)
+ARTwarp_cli_mode(csvDir, 3, 96, 56, 100)

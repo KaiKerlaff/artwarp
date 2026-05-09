@@ -28,6 +28,12 @@ if ~is_cli_mode
     h = findobj('Tag', 'resample');
     resample = get(h, 'Value');
 
+    h = findobj('Tag', 'compareWarped');
+    compareWarped = get(h, 'Value');
+
+    h = findobj('Tag', 'recatSingleCats');
+    recatSingleCats = get(h, 'Value');
+
 % Otherwise, get the network parameters from the network_params dicttionary
 % passed from ARTwarp_cli_mode
 else
@@ -39,6 +45,8 @@ else
     maxNumIterations = network_params('maxNumIterations');
     resample = network_params('resample');
     sampleInterval = network_params('sampleInterval');
+    compareWarped = network_params('compareWarped');
+    recatSingleCats = network_params('recatSingleCats');
 end
 
 % Input validation --------
@@ -119,6 +127,14 @@ weight = ones(p, 0); %create an empty matrix 'weight' with p rows (max of DATA.l
 NET = struct('numFeatures', {p}, 'numCategories', {0}, 'maxNumCategories', {maxNumCategories}, 'weight', {weight}, ...
     'vigilance', {vigilance}, 'bias', {bias}, 'maxNumIterations', {maxNumIterations}, 'learningRate', {learningRate});
 
+% Read DATA.contour into a numSamples x numFeatures matrix, right-padded
+% with NaN
+DATAContoursMatrix = NaN*zeros(numSamples, p);
+for i = 1:numSamples
+    contourRead = DATA(i).contour;
+    DATAContoursMatrix(i, 1:length(contourRead)) = contourRead;
+end
+
 % if not running in cli mode, GENERATING THE GRAPHIC DISPLAY
 if ~is_cli_mode
     ARTwarp_Create_Figure
@@ -126,6 +142,8 @@ end
 
 % TRAINING
 [x, sortedRandom] = sort(randn(numSamples, 1)); %randomize the list of contours
+
+fprintf("\n--- ITERATIONS ---\n");
 % Go through the data once for every iteration.
 for iterationNumber = 1:NET.maxNumIterations
     
@@ -191,7 +209,7 @@ for iterationNumber = 1:NET.maxNumIterations
                 % If so, the current category should code the input.
                 % Therefore, we should update the weights and induce resonance.
                 % warpFunction = round(mean([warpFunction; 1:(warpFunction(end)-1)/(length(warpFunction)-1):warpFunction(end)]));
-                NET.weight = ARTwarp_Update_Weights(currentData, NET.weight, currentCategory, NET.learningRate, warpFunction);
+                NET.weight = ARTwarp_Update_Weights(currentData, NET.weight, currentCategory, NET.learningRate, warpFunction, compareWarped);
                 DATA(sampleNumber).category = currentCategory;
                 Xmax = max([Xmax length(find(NET.weight(:, currentCategory)>0))]);
                 Ymax = max([Ymax max(NET.weight(:, currentCategory))]);
@@ -265,6 +283,59 @@ for iterationNumber = 1:NET.maxNumIterations
     end
     % If no new categories were added, and no inputs were reclassified in the current iteration
     % then we've reached equilibrium. Thus, we can stop training.
+    
+    if is_cli_mode
+        fprintf('\nIteration %d complete\n', iterationNumber);
+        fprintf('Reclassified samples : %d\n', numChanges);
+        fprintf('Current categories   : %d\n', NET.numCategories);
+        drawnow;
+    end
+
+    % If trying to recategorise single-contour categories:
+    if recatSingleCats == 1
+
+        % Read DATA.category and DATA.match into matrices
+        cats = zeros(1,numSamples);
+        mats = zeros(1,numSamples);
+        for sample = 1:numSamples
+            cat = DATA(sample).category;
+            mat = DATA(sample).match;
+            if isempty(cat)
+                cat = 0;
+            end
+            if isempty(mat)
+                mat = NaN;
+            end
+            cats(1,sample) = cat;
+            mats(1,sample) = mat;
+        end
+
+        % Recategorise single-contour categories where possible
+        [updatedCategories, updatedMatches, updatedWeight,...
+            updatedNumCategories] =...
+            ARTwarp_Recat_Single_Cats(cats, mats, DATAContoursMatrix,...
+            NET.weight, vigilance, bias, learningRate, compareWarped);
+
+        % Assign the updated weights to NET.weight and update the number of
+        % categories
+        NET.weight = updatedWeight;
+        NET.numCategories = updatedNumCategories;
+
+        % Assign the updated category and match matrices back to the DATA
+        % struct
+        for i = 1:numSamples
+            DATA(i).category = updatedCategories(i);
+            DATA(i).match = updatedMatches(i);
+        end
+    end
+
+    % If updating weights according to warped contours:
+    if compareWarped == 1
+        % Resample each category's weight to be the mean lengths of the contours in
+        % that category
+        NET.weight = ARTwarp_Average_Weights(NET.weight, [DATA.length], [DATA.category]);
+    end
+
     if numChanges == 0
         break;
     end  
@@ -278,10 +349,7 @@ for iterationNumber = 1:NET.maxNumIterations
     name = sprintf(formatSpec,NET.vigilance, iterationNumber);
 
     % Save iteration information to the specified results folder
-    save(fullfile(output_folder, name)); 
-
-    % Output success message
-    fprintf('Results successfully exported to: %s\n', output_folder);
+    save(fullfile(output_folder, name));
 end
 
 % ASSEMBLE THE REFCONTOURS STRUCT
@@ -369,6 +437,10 @@ end
 formatSpec = 'ARTwarp%02.0fFINAL';
 endname = sprintf(formatSpec,NET.vigilance);
 save(fullfile(output_folder, endname)); 
+
+% Output success message
+fprintf('\nARTwarp CLI mode run finished.\n');
+fprintf('Results successfully exported to: %s\n', output_folder);
 
 % Re-enable GUI options if not running in cli mode
 if ~is_cli_mode
