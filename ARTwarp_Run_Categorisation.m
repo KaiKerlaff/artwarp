@@ -106,6 +106,11 @@ if resample == 1
     % sampleInterval
     for c1 = 1:numSamples
         DATA(c1).contour = interp1(1:length(DATA(c1).contour), DATA(c1).contour, 1:sampleInterval/DATA(c1).tempres:length(DATA(c1).contour));
+
+        % TESTING
+        disp("step for contour " + string(c1) + " = " + string(sampleInterval/DATA(c1).tempres))
+        disp("so new_length for contour " + string(c1) + " = " + string())
+
         DATA(c1).length = length(DATA(c1).contour);
     end
 end
@@ -159,7 +164,11 @@ else
     end
     [~, sortOrder] = sort(names);
 end
-   
+
+% save all processed contours to files for debugging
+for i = 1:numSamples
+    writematrix(DATA(i).contour,'MATcontour' + string(i) + '.txt','Delimiter',',')
+end
 
 fprintf("\n--- ITERATIONS ---\n");
 % Go through the data once for every iteration.

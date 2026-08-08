@@ -74,6 +74,11 @@ for c1 = 1:numSamples
     end
 end
 
+% save all processed contours to files for debugging
+%for i = 1:numSamples
+    %writematrix(DATA(i).contour,'MATcontour' + string(i) + '.txt','Delimiter',',')
+%end
+
 % if not running in cli mode, update the gui to undim the 'run' menu
 if ~is_cli_mode
     h = findobj('Tag', 'Runmenu'); %find the object Runmenu (which is in ARTwarp.m)                                                                                                                        
