@@ -1,4 +1,4 @@
-function ARTwarp_Save_DATA_to_csv(filename)
+function ARTwarp_Save_DATA_to_csv(filename, outputFileName)
 
 % DATA structure must be present in filename
 load(filename, "DATA");
@@ -21,4 +21,4 @@ dataTable = struct2table(DATA);
 dataTable.Properties.VariableNames = ["contour_name" "category" "match"];
 
 % write the DATA table (without the removed fields) to .csv
-writetable(dataTable, "DATA.csv");
+writetable(dataTable, outputFileName);
