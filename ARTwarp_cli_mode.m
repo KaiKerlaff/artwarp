@@ -147,5 +147,18 @@ ARTwarp_Load_Data(true, inputFolder);
 
 ARTwarp_Run_Categorisation(true, params, outputFolder)
 
+
+% FOR ARTWARP-PY COMPARISON
+% Find the final (converged) output file using the format used in
+% ARTwarp_Run_Categorisation.m
+formatSpec = 'ARTwarp%02.0fFINAL';
+endname = sprintf(formatSpec,vigilance);
+outputFile = fullfile(outputFolder, endname);
+
+% Save contour names, categories and matches to .csv in the same folder as
+% the output file
+ARTwarp_Save_DATA_to_csv(outputFile, fullfile(outputFolder, "MATLAB_category_assignments.csv"))
+% END FOR ARTWARP-PY COMPARISON
+
 end
 
